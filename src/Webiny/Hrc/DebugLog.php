@@ -1,6 +1,6 @@
 <?php
 /**
- * Webiny Htpl (https://github.com/Webiny/Htpl/)
+ * Webiny Hrc (https://github.com/Webiny/Hrc/)
  *
  * @copyright Copyright Webiny LTD
  */

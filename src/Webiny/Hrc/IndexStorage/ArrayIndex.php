@@ -1,6 +1,6 @@
 <?php
 /**
- * Webiny Htpl (https://github.com/Webiny/Htpl/)
+ * Webiny Hrc (https://github.com/Webiny/Hrc/)
  *
  * @copyright Copyright Webiny LTD
  */
@@ -98,7 +98,7 @@ class ArrayIndex implements IndexStorageInterface
         foreach ($this->array['Key2Tags'] as $key => $keyTags) {
             $found = true;
             foreach ($tags as $t) {
-                if (!array_search($t, $keyTags)) {
+                if (array_search($t, $keyTags)===false) {
                     $found = false;
                 }
             }

@@ -1,6 +1,6 @@
 <?php
 /**
- * Webiny Htpl (https://github.com/Webiny/Htpl/)
+ * Webiny Hrc (https://github.com/Webiny/Hrc/)
  *
  * @copyright Copyright Webiny LTD
  */
@@ -24,11 +24,11 @@ class FileSystem implements CacheStorageInterface
      */
     public function __construct($cacheDir)
     {
-        $this->cacheDir = realpath(rtrim($cacheDir));
+        $this->cacheDir = rtrim($cacheDir, DIRECTORY_SEPARATOR);
         if (!$this->cacheDir) {
             mkdir($this->cacheDir, 0755, true);
         }
-        $this->cacheDir .= DIRECTORY_SEPARATOR;
+        $this->cacheDir = realpath($this->cacheDir) . DIRECTORY_SEPARATOR;
     }
 
     /**
@@ -106,7 +106,7 @@ class FileSystem implements CacheStorageInterface
     private function getCachePath($cacheKey)
     {
         $folder = $this->cacheDir . substr($cacheKey, 0, 2) . DIRECTORY_SEPARATOR . substr($cacheKey, 2,
-                2) . DIRECTORY_SEPARATOR;
+                2) . DIRECTORY_SEPARATOR . substr($cacheKey, 4, 2) . DIRECTORY_SEPARATOR;
         if (!is_dir($folder)) {
             mkdir($folder, 0755, true);
         }
