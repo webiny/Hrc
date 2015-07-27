@@ -116,13 +116,13 @@ class HrcTest extends \PHPUnit_Framework_TestCase
         $result = $this->instance->read('fooBar');
         $this->assertFalse($result);
 
-        $key = $this->instance->save('fooBar', 'some content', ['customTag']);
+        $key = $this->instance->save('fooBar', 'some content', null, ['customTag']);
         $this->assertSame(32, strlen($key));
         $this->instance->purgeByTag(['customTag']);
         $result = $this->instance->read('fooBar');
         $this->assertFalse($result);
 
-        $key = $this->instance->save('fooBar', 'some content', ['customTag']);
+        $key = $this->instance->save('fooBar', 'some content', null, ['customTag']);
         $this->assertSame(32, strlen($key));
         $this->instance->purgeByTag(['someOtherTag']);
         $result = $this->instance->read('fooBar');

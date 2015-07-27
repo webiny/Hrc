@@ -25,7 +25,7 @@ class ArrayIndexTest extends \PHPUnit_Framework_TestCase
         $result = $instance->selectByTags(['test']);
         $this->assertSame([], $result);
 
-        $instance->save($key, ['test', 'foo']);
+        $instance->save($key, ['test', 'foo'], 90);
         $result = $instance->selectByTags(['test']);
         $this->assertSame([$key], $result);
         $result = $instance->selectByTags(['foo']);
@@ -40,8 +40,8 @@ class ArrayIndexTest extends \PHPUnit_Framework_TestCase
         $key1 = md5('some key');
         $key2 = md5('foo bar');
 
-        $instance->save($key1, ['test']);
-        $instance->save($key2, ['test']);
+        $instance->save($key1, ['test'],  90);
+        $instance->save($key2, ['test'], 90);
 
         $result = $instance->selectByTags(['test']);
         $this->assertSame([$key1, $key2], $result);
@@ -62,9 +62,9 @@ class ArrayIndexTest extends \PHPUnit_Framework_TestCase
         $key2 = md5('foo bar');
         $key3 = md5('bar foo');
 
-        $instance->save($key1, ['test', 'foo']);
-        $instance->save($key2, ['test', 'bar']);
-        $instance->save($key3, ['test', 'foo']);
+        $instance->save($key1, ['test', 'foo'], 90);
+        $instance->save($key2, ['test', 'bar'], 90);
+        $instance->save($key3, ['test', 'foo'], 90);
 
         $instance->deleteEntryByTags(['bar']);
         $result = $instance->selectByTags(['test']);

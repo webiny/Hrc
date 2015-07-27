@@ -38,11 +38,12 @@ class FileSystem implements IndexStorageInterface
      *
      * @param string $key  Cache key.
      * @param array  $tags List of tags attached to the entry.
+     * @param int    $ttl  Unix timestamp until when the cache entry is considered valid.
      *
      * @return bool True if save was successful, otherwise false.
      * @throws HrcException
      */
-    public function save($key, array $tags)
+    public function save($key, array $tags, $ttl)
     {
         if (count($tags) < 1) {
             throw new HrcException('You need to provide at least one tag.');
@@ -53,9 +54,14 @@ class FileSystem implements IndexStorageInterface
         // open the index for reading and writing
         $h = fopen($index, 'a+');
 
+        // validate ttl length
+        if (strlen($ttl) != 10) {
+            throw new HrcException('$ttl must always be 10 digits.');
+        }
+
         // check if we already have the key indexed
-        // we read 32 chars because the key is hashed using md5
-        while (($i = fread($h, 32))) {
+        // we read 42 chars because the key is hashed using md5 (32 chars) + 10 chars for ttl
+        while (($i = fread($h, 42))) {
             if ($i == $key) {
                 return true;
             }
@@ -94,10 +100,10 @@ class FileSystem implements IndexStorageInterface
             $h = fopen($index, 'r');
 
             // try to find the key and remove it if found
-            // we read 32 chars because the key is hashed using md5
+            // we read 42 chars because the key is hashed using md5 (32 chars) + 10 chars for ttl
             $buffer = '';
             $indexFound = false;
-            while (($i = fread($h, 32))) {
+            while (($i = fread($h, 42))) {
                 if ($i != $key) {
                     $buffer .= $i;
                 } else {
@@ -180,13 +186,26 @@ class FileSystem implements IndexStorageInterface
         $keys = [];
 
         // open and read the index
+        $ct = time();
+        $entriesToDelete = [];
         foreach ($result as $index) {
             $indexHandler = fopen($index, 'r');
-            while (($i = fread($indexHandler, 32))) {
-                $keys[] = $i;
+            while (($i = fread($indexHandler, 42))) {
+                // validate timestamp
+                $ttl = substr($i, 32, 10);
+                if ($ttl > $ct) {
+                    $keys[] = $i;
+                } else {
+                    $entriesToDelete[] = $i;
+                }
             }
             // close the handler
             fclose($indexHandler);
+        }
+
+        // check if there are expired entries we need to delete
+        foreach ($entriesToDelete as $i => $k) {
+            $this->deleteEntryByKey(substr($k, 0, 32));
         }
 
         return $keys;

@@ -15,6 +15,7 @@ interface CacheStorageInterface
 {
     /**
      * Read the cache for the given key.
+     * Note: on read, the storage should invalidate the cache if it has expired.
      *
      * @param string $key Cache key
      *

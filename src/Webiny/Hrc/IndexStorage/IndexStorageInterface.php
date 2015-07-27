@@ -18,10 +18,11 @@ interface IndexStorageInterface
      *
      * @param string $key  Cache key.
      * @param array  $tags List of tags attached to the entry.
+     * @param int    $ttl  Unix timestamp until when the cache entry is considered valid.
      *
      * @return bool True if save was successful, otherwise false.
      */
-    public function save($key, array $tags);
+    public function save($key, array $tags, $ttl);
 
     /**
      * Removes the index entry for the given cache key.
@@ -45,6 +46,7 @@ interface IndexStorageInterface
     /**
      * Return a list of cache keys that match the given tags.
      * Note: Only entries that match all tags will be returned.
+     * Note2: on select, the storage should invalidate the cache index if it has expired.
      *
      * @param array $tags
      *

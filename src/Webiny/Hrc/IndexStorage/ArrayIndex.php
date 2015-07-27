@@ -24,11 +24,13 @@ class ArrayIndex implements IndexStorageInterface
      *
      * @param string $key  Cache key.
      * @param array  $tags List of tags attached to the entry.
+     * @param int    $ttl  Unix timestamp until when the cache entry is considered valid.
      *
      * @return bool True if save was successful, otherwise false.
      */
-    public function save($key, array $tags)
+    public function save($key, array $tags, $ttl)
     {
+        // !ttl is ignored on this driver
         $this->array['Key2Tags'][$key] = $tags;
 
         foreach ($tags as $t) {

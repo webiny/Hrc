@@ -62,6 +62,16 @@ class Hrc
      */
     private $log;
 
+    /**
+     * @var array
+     */
+    private $cacheRules;
+
+    /**
+     * @var array
+     */
+    private $cacheRuleMap;
+
 
     /**
      * Base constructor.
@@ -81,14 +91,17 @@ class Hrc
         $this->indexStorage = $indexStorage;
 
         // parse cache rules
+        $i = 0;
         foreach ($cacheRules as $crName => $cr) {
             if (isset($cr['Ttl']) && isset($cr['Tags']) && isset($cr['Match'])) {
-                $this->cacheRules[] = new CacheRule($crName, $cr['Ttl'], $cr['Tags'], $cr['Match'],
+                $this->cacheRules[$i] = new CacheRule($crName, $cr['Ttl'], $cr['Tags'], $cr['Match'],
                     (isset($cr['QueryParams']) ? $cr['QueryParams'] : null));
+                $this->cacheRuleMap[$crName] = $i;
             } else {
                 throw new HrcException(sprintf('Unable to parse "%s" rule. The rule is missing a definition for one of these attributes: Ttl, Tags or Match',
                     $crName));
             }
+            $i++;
         }
     }
 
@@ -203,11 +216,12 @@ class Hrc
      * Try to retrieve the a value from the cache for the given name and current request.
      * Note: If purge flag is set to true, the read method will actually purge the matched cache entry and return false.
      *
-     * @param string $name The same name used when saving the cache.
+     * @param string $name      The same name used when saving the cache.
+     * @param string $cacheRule The name of the cache rule that should be used, instead of the matched cache rule based on the request.
      *
      * @return bool|string Cache value, or false if the entry was not found.
      */
-    public function read($name)
+    public function read($name, $cacheRule = null)
     {
         // initialize log
         $log = new DebugLog();
@@ -221,7 +235,7 @@ class Hrc
         }
 
         // get rule
-        if (!($rule = $this->getMatchedRule()) || $rule->getCacheRule()->getTtl() <= 0) {
+        if (!($rule = $this->getMatchedRule($cacheRule)) || $rule->getCacheRule()->getTtl() <= 0) {
             $log->addMessage('CacheRule-Match', 'No rule matched the request.');
 
             return false;
@@ -259,13 +273,14 @@ class Hrc
      *
      * @param string $name            Name that will be used to construct the cache key.
      * @param string $content         Content that should be save, must be a string.
+     * @param string $cacheRule       The name of the cache rule that should be used, instead of the matched cache rule based on the request.
      * @param array  $cacheTagsAppend Optionally you can append additional tags to the matched rule for this request.
      *                                These tags can be used later to purge the cache.
      *
      * @return bool|string A cache key is returned if save was successful, otherwise false.
      * @throws HrcException
      */
-    public function save($name, $content, $cacheTagsAppend = [])
+    public function save($name, $content, $cacheRule = null, $cacheTagsAppend = [])
     {
         // initialize log
         $log = new DebugLog();
@@ -279,7 +294,7 @@ class Hrc
         }
 
         // get rule
-        if (!($rule = $this->getMatchedRule()) || $rule->getCacheRule()->getTtl() <= 0) {
+        if (!($rule = $this->getMatchedRule($cacheRule)) || $rule->getCacheRule()->getTtl() <= 0) {
             $log->addMessage('CacheRule-Match', 'No rule matched the request.');
 
             return false;
@@ -293,7 +308,8 @@ class Hrc
 
         // update the index
         if ($saved) {
-            $this->indexStorage->save($key, array_merge($cacheTagsAppend, $rule->getCacheRule()->getTags()));
+            $this->indexStorage->save($key, array_merge($cacheTagsAppend, $rule->getCacheRule()->getTags()),
+                ($rule->getCacheRule()->getTtl() + time()));
             $log->addMessage('CacheStorage-Save', 'Cache saved.');
         } else {
             throw new HrcException('There has been an error while trying to save the cache.');
@@ -375,15 +391,22 @@ class Hrc
      *
      * @return bool|MatchedRule MatchedRule instance. or false if no cache rule matched the request.
      */
-    public function getMatchedRule()
+    public function getMatchedRule($cacheRule = null)
     {
         $request = $this->getRequest();
 
-        foreach ($this->cacheRules as $cr) {
-            if (($cacheKey = $cr->match($request))) {
-                return new MatchedRule($cr, $cacheKey);
+        if (!empty($cacheRule)) {
+            if (isset($this->cacheRuleMap[$cacheRule])) {
+                return ($this->cacheRules[$this->cacheRuleMap[$cacheRule]]);
+            }
+        } else {
+            foreach ($this->cacheRules as $cr) {
+                if (($cacheKey = $cr->match($request))) {
+                    return new MatchedRule($cr, $cacheKey);
+                }
             }
         }
+
 
         return false;
     }
