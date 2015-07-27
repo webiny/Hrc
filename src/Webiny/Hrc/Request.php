@@ -44,15 +44,10 @@ class Request
      */
     public function __construct($url = null, array $headers = null, array $cookies = null, array $queryParams = null)
     {
-        $this->url = empty($url) ? $this->getCurrentUrl() : $url;
-        $this->headers = empty($headers) ? $this->getCurrentHeaders() : $headers;
-        $this->cookies = empty($cookies) ? $_COOKIE : $cookies;
-        $this->queryParams = empty($queryParams) ? $_GET : $queryParams;
-
-        // sort parameters so we always have them in same order
-        ksort($this->headers);
-        ksort($this->cookies);
-        ksort($this->queryParams);
+        $this->setUrl((is_null($url) ? $this->getCurrentUrl() : $url));
+        $this->setHeaders((is_null($headers) ? $this->getCurrentHeaders() : $headers));
+        $this->setCookies((is_null($cookies) ? $_COOKIE : $cookies));
+        $this->setQueryParams((is_null($queryParams) ? $_GET : $queryParams));
     }
 
     /**
@@ -83,6 +78,7 @@ class Request
     public function setHeaders(array $headers)
     {
         $this->headers = $headers;
+        ksort($this->headers);
     }
 
     /**
@@ -103,6 +99,7 @@ class Request
     public function setCookies(array $cookies)
     {
         $this->cookies = $cookies;
+        ksort($this->cookies);
     }
 
     /**
@@ -123,6 +120,7 @@ class Request
     public function setQueryParams(array $queryParams)
     {
         $this->queryParams = $queryParams;
+        ksort($this->queryParams);
     }
 
     /**
@@ -272,13 +270,13 @@ class Request
      */
     private function matchValue($value, $pattern)
     {
-        if (strpos($pattern, '*') !== false) {
+        if (strpos($pattern, '(') !== false || strpos($pattern, '[') !== false || strpos($pattern, '\\') !== false
+        ) {
+            return preg_match('#^' . $pattern . '$#', $value);
+        } elseif (strpos($pattern, '*') !== false) {
             $pattern = preg_quote($pattern, '#');
             $pattern = str_replace('\*', '(.+)', $pattern);
 
-            return preg_match('#^' . $pattern . '$#', $value);
-        } elseif (strpos($pattern, '(') !== false || strpos($pattern, '[') !== false || strpos($pattern, '\\') !== false
-        ) {
             return preg_match('#^' . $pattern . '$#', $value);
         } else {
             return $value == $pattern;

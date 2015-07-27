@@ -157,6 +157,29 @@ class Hrc
     }
 
     /**
+     * Get a specific cache rule, or all of them.
+     *
+     * @param null|string $name If provided, only the matching rule will be returned.
+     *
+     * @return bool|CacheRule
+     */
+    public function getCacheRule($name = null)
+    {
+        if (is_null($name)) {
+            return $this->cacheRules;
+        } else {
+            foreach ($this->cacheRules as $r) {
+                if ($r->getName() == $name) {
+                    return $r;
+                }
+            }
+
+            return false;
+        }
+    }
+
+
+    /**
      * Add a cache rule to the end of cache rule list.
      *
      * @param CacheRule $cr Cache rule.
@@ -193,12 +216,14 @@ class Hrc
         // check if get
         if (!isset($_SERVER['REQUEST_METHOD']) || strtolower($_SERVER['REQUEST_METHOD']) != 'get') {
             $log->addMessage('CacheRule-Match', 'Only GET requests can be cached.');
+
             return false;
         }
 
         // get rule
         if (!($rule = $this->getMatchedRule()) || $rule->getCacheRule()->getTtl() <= 0) {
             $log->addMessage('CacheRule-Match', 'No rule matched the request.');
+
             return false;
         }
         $log->addMessage('CacheRule-Match', sprintf('%s rule matched the request.', $rule->getCacheRule()->getName()));
@@ -208,6 +233,7 @@ class Hrc
         $log->addMessage('CacheRule-CacheKey', $key);
         if (!($cache = $this->cacheStorage->read($key))) {
             $log->addMessage('CacheStorage-Read', 'MISS');
+
             return false;
         }
         $log->addMessage('CacheStorage-Read', 'HIT');
@@ -216,6 +242,7 @@ class Hrc
         if ($this->purgeFlag || $this->canPurge()) {
             $log->addMessage('CacheRule-Purge', 'A purge was requested. Purging cache and returning false on read.');
             $this->purgeByCacheKey($key);
+
             return false;
         }
 
@@ -247,12 +274,14 @@ class Hrc
         // check if get
         if (!isset($_SERVER['REQUEST_METHOD']) || strtolower($_SERVER['REQUEST_METHOD']) != 'get') {
             $log->addMessage('CacheRule-Match', 'Only GET requests can be cached.');
+
             return false;
         }
 
         // get rule
         if (!($rule = $this->getMatchedRule()) || $rule->getCacheRule()->getTtl() <= 0) {
             $log->addMessage('CacheRule-Match', 'No rule matched the request.');
+
             return false;
         }
         $log->addMessage('CacheRule-Match', sprintf('%s rule matched the request.', $rule->getCacheRule()->getName()));
@@ -272,7 +301,8 @@ class Hrc
 
         $this->log = $log;
 
-        return $key;  // when saved, return cache key
+        // when saved, return cache key
+        return $key;
     }
 
     /**
