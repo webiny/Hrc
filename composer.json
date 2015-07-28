@@ -1,7 +1,7 @@
 {
     "name": "webiny/hrc",
     "type": "library",
-    "description": "A caching layer where cache rules are based on the incoming HTTP request information.",
+    "description": "Cache management layer where cache rules are based on incoming HTTP request.",
     "keywords": [
         "cache"
     ],
