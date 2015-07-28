@@ -1,8 +1,8 @@
 HRC - Http Request Cache
 =====
 
-This is a cache management system that caches a result based on the incoming HTTP request. In practice that means that you can
-create caches based on a combination of a request path, cookies, sent headers, query strings and some custom callbacks.
+This is a cache management system that provides control mechanisms around your cache. Caches are tied to the incoming HTTP request.
+In practice that means that you can create caches based on a combination of a request path, cookies, sent headers, query strings and some custom callbacks.
 
 ### ... but I use memcache (or redis)
 
@@ -12,9 +12,10 @@ Sure, but that's not a cache management system, that's just a storage ... managi
 A much smarter person than me, once stated: 
 
 > There are only two hard things in Computer Science: cache invalidation and naming things.
+
 > -- Phil Karlton
 
-You can still also use memcache, redis or any other cache storage system you want, just create a driver for it and hook it into Hrc. 
+You can still use memcache, redis or any other cache storage system you want, just create a driver for it and hook it into Hrc. 
 (see the guide down below)
 
 ## Installation
@@ -53,7 +54,7 @@ $data = $hrc->read('entryName'); // some content
 
 ### 1. Define a set of cache rules
 
-Cache rules define what and how something can be cached. 
+Cache rules define how and if something can be cached. 
 For example, a simple cache rule looks something like this:
 
 ```php
@@ -68,21 +69,24 @@ $cacheRules = [
 ];
 ```
 
-`Ttl` (Time-to-live) defines for how long that entry should be cached.
-`Tags` are used to tag the content, so you can invalidate it easier later on.
-`Match` is a set of match criterias that the rule needs to satisfy in order for you to be able to store content.
+`Ttl` (Time-to-live) defines for how long that entry should be kept in cache.
+
+`Tags` are used to tag the content, so you can invalidate it easier.
+
+`Match` is a set of match criterias that the rule needs to satisfy in order for you to be able to store content. They 
+also define what is used to create a cache key.
 
 #### Match criterias
 
 There are several things you can use in your match criteria:
-1. Url path
-2. Query string
-3. Request headers
-4. Cookies
-5. Custom callback
+* Url path
+* Query string
+* Request headers
+* Cookies
+* Custom callback
 
 For the first 4 items, you can use regex (PHP `preg_match` standard) or wildcard.
-Query strings, cookies and headers, you can test also if they are just defined, you don't need to match their value.
+Query strings, cookies and headers, you can also test if they are just defined, you don't need to match their value.
 **Note**: based on the items in match criteria the cache key is defined. For example, if you don't want to match by url, 
 but you still want the url to be part of your cache key, set the url match to '*' (wildcard / match any). If you don't do that,
 the url will not be used in creating a unique cache key for that request.
@@ -116,14 +120,14 @@ $mockRules = [
 ];
 ```
 
-When you use boolean values in match values, in that case, only the name of that header/query string/cookie is used 
+When you use boolean in match values, in that case, only the name of that header/query string/cookie is used 
 in building the cache key, the value is not used.
 
-The `Callback` section is used to invoke a custom callback to determine if that cache rule is matched successfully. 
+The `Callback` section is used to invoke a custom callback which is basically just an extension to the match rules. 
  The callback method should return a value, that value will be used to build the cache key. If the callback returns boolean `false`, 
  the rule will not match the request.
 
-A callback method takes to parameter, `Webiny\Hrc\Request` and `Webiny\Hrc\CacheRules\CacheRule\CacheRule`:
+A callback method takes two parameters, `Webiny\Hrc\Request` and `Webiny\Hrc\CacheRules\CacheRule\CacheRule`:
 
 ```php
 class MockCallbacks
@@ -138,8 +142,8 @@ class MockCallbacks
  
 ### 2. Cache storage
 
-Hrc is build in a way that you can store your cache using any storage you can imagine, from memcache to mongodb. By default
-only a filesystem storage is provided. If you have written any other storage, send over a pull request, and we will gladly merge it. 
+Hrc is build in a way that you can store your cache using any storage you wish, from memcache to mongodb. By default
+only a filesystem storage is provided. If you write a driver for any other storage mechanism, send over a pull request, and we will gladly merge it. 
 
 Creating a storage drive is rather simple, just create a class and implement `Webiny\Hrc\CacheStorage\CacheStorageInterface`.
 You have 3 simple methods to implement, and you're done.
@@ -154,9 +158,9 @@ By default a filesystem cache index driver is provided, to create a custom-one, 
 ### 4. Matching a cache rule
 
 When you call the `read` or `save` method, if you don't provide the name of the cache rule, the class will run through all
-of defined cache rules, and will select the **first rule that matches the request**.
-However if you provide the cache rule name, the cache rule match patterns still must match. By providing a cache rule name, you 
-can match multiple cache rules inside the same HTTP request.
+of defined cache rules, and will select the **first rule that matched the request**.
+However if you provide the cache rule name, the cache rule match patterns still must match, but the check will only be done on that particular rule.
+By providing a cache rule name, you can match multiple cache rules inside the same HTTP request.
 
 ```php
 // use the first matched cache rule
@@ -206,14 +210,14 @@ $hrc->read('entryName');
 ```
 
 Another way of doing this is by sending a special request header inside your request. That header is `X-HRC-Purge` and it just 
-need to be defined, there is no need to set any value for it. Sending that header has the same effect as setting the purge flag to true, 
+needs to be defined, there is no need to set any value for it. Sending that header has the same effect as setting the purge flag to true, 
 but this way you don't need to set the flag, and it's actually only valid for that particular request. 
 
 #### Security
 
-Based on the previous section, you might think that there is a big risk in having that flag, because everybody can purge the cache and hit your
-database/backend on every request...and that's true, but there is built-in mechanism to prevent that. 
-You can set a `control key`, so only requests that have a valid key can actually purge via header.
+Based on the previous section, you might think that there is a big risk in having that header, because everybody can purge the cache and hit your
+database/backend on every request...and that's true, but there's a built-in mechanism to prevent that. 
+You can set a `control key`, so only requests that have a valid key can actually purge via the header.
 
 ```php
 // set the control header
