@@ -26,11 +26,13 @@ class FileSystem implements IndexStorageInterface
      */
     public function __construct($indexDir)
     {
-        $this->indexDir = realpath(rtrim($indexDir));
+        $indexDir = rtrim($indexDir);
+        $this->indexDir = realpath($indexDir);
+
         if (!$this->indexDir) {
-            mkdir($this->indexDir, 0755, true);
+            mkdir($indexDir, 0755, true);
         }
-        $this->indexDir .= DIRECTORY_SEPARATOR;
+        $this->indexDir = $indexDir . DIRECTORY_SEPARATOR;
     }
 
     /**
