@@ -142,8 +142,8 @@ class MockCallbacks
  
 ### 2. Cache storage
 
-Hrc is build in a way that you can store your cache using any storage you wish, from memcache to mongodb. By default
-only a filesystem storage is provided. If you write a driver for any other storage mechanism, send over a pull request, and we will gladly merge it. 
+Hrc is built in a way that you can store cache using any storage you want, from memcache to mongodb. By default
+we provide a filesystem storage and MongoDb. If you write a driver for any other storage mechanism, send over a pull request, and we will gladly merge it.
 
 Creating a storage drive is rather simple, just create a class and implement `Webiny\Hrc\CacheStorage\CacheStorageInterface`.
 You have 3 simple methods to implement, and you're done.
@@ -153,7 +153,24 @@ You have 3 simple methods to implement, and you're done.
 Index storage is used to store additional cache information, you can look at it as a combination of cache metadata
 and taxonomy. The index is mainly used to achieve more possibilities around cache invalidation and faster cache invalidation times.
 
-By default a filesystem cache index driver is provided, to create a custom-one, just implement `Webiny\Hrc\IndexStorage\IndexStorageInterface`.
+By default we provide a filesystem cache index  and a MongoDb cache index, to create a custom-one, just implement `Webiny\Hrc\IndexStorage\IndexStorageInterface`.
+
+### Mongo storage and index
+
+If you plan to use the `Mongo` cache storage and cache index, make sure you run the `installCollections` method prior to using the driver,
+otherwise the required indexes won't be created and the performance will be slow.
+
+```php
+$this->cacheStorage->installCollections();
+$this->indexStorage->installCollections();
+```
+
+You need to run this only once. Alternative approach is to create the two collections and indexes manually:
+ - `HrcCacheStorage` collection should have only one index:
+    - `key` => unique index on the `key` field, sparse should be false
+ - `HrcIndexStorage` collection should have two indexes:
+    - `key` => unique index on the `key` field, sparse should be false
+    - `tags` => index on the `tags` field
 
 ### 4. Matching a cache rule
 
