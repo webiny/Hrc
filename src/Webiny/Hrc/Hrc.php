@@ -76,7 +76,7 @@ class Hrc
     /**
      * Base constructor.
      *
-     * @param array                 $cacheRules   List of cache rules.
+     * @param array                 $cacheRules List of cache rules.
      * @param CacheStorageInterface $cacheStorage Cache storage instance.
      * @param IndexStorageInterface $indexStorage Index storage instance.
      *
@@ -216,7 +216,7 @@ class Hrc
      * Try to retrieve the a value from the cache for the given name and current request.
      * Note: If purge flag is set to true, the read method will actually purge the matched cache entry and return false.
      *
-     * @param string $name      The same name used when saving the cache.
+     * @param string $name The same name used when saving the cache.
      * @param string $cacheRule The name of the cache rule that should be used, instead of the matched cache rule based on the request.
      *
      * @return bool|string Cache value, or false if the entry was not found.
@@ -271,9 +271,9 @@ class Hrc
      * In case if no cache rule was matched, false is returned.
      *
      *
-     * @param string $name            Name that will be used to construct the cache key.
-     * @param string $content         Content that should be save, must be a string.
-     * @param string $cacheRule       The name of the cache rule that should be used, instead of the matched cache rule based on the request.
+     * @param string $name Name that will be used to construct the cache key.
+     * @param string $content Content that should be save, must be a string.
+     * @param string $cacheRule The name of the cache rule that should be used, instead of the matched cache rule based on the request.
      * @param array  $cacheTagsAppend Optionally you can append additional tags to the matched rule for this request.
      *                                These tags can be used later to purge the cache.
      *
@@ -345,16 +345,25 @@ class Hrc
      * Purge all cache entries that match the given tags.
      * Note: AND condition is used between tags, so all tags must match for in order to purge a cache key.
      *
-     * @param array $tags List of tags used to purge the cache.
+     * @param array|string $tags Single tag or a list of tags used to purge the cache.
+     *
+     * @return bool
      */
-    public function purgeByTag(array $tags)
+    public function purgeByTag($tags)
     {
+        if (is_string($tags)) {
+            $tags = [$tags];
+        }
+
         // initialize log
         $log = new DebugLog();
         $log->addMessage('State', 'Purge by cache tag');
 
         // get caches from index storage
         $cacheKeys = $this->indexStorage->selectByTags($tags);
+        if (!is_array($cacheKeys)) {
+            return false;
+        }
 
         foreach ($cacheKeys as $ck) {
             // purge from cache storage
@@ -363,6 +372,8 @@ class Hrc
 
         // purge the index storage
         $this->indexStorage->deleteEntryByTags($tags);
+
+        return true;
     }
 
     /**
@@ -414,7 +425,7 @@ class Hrc
     /**
      * Joins the given cache key and the name into a single cache key.
      *
-     * @param string $name     Cache name.
+     * @param string $name Cache name.
      * @param string $cacheKey Cache key generated from the cache rule.
      *
      * @return string New cache key.
