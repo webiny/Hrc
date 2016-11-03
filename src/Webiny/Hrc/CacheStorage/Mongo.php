@@ -6,6 +6,7 @@
  */
 namespace Webiny\Hrc\CacheStorage;
 
+use MongoDB\BSON\UTCDatetime;
 use MongoDB\Model\CollectionInfo;
 use Webiny\Component\Mongo\Index\SingleIndex;
 
@@ -47,8 +48,8 @@ class Mongo implements CacheStorageInterface
     {
         $result = $this->mongoInstance->findOne(self::collection, ['key' => $key]);
 
-        if (is_object($result) && isset($result->content)) {
-            return $result->content;
+        if (is_array($result) && isset($result['content'])) {
+            return $result['content'];
         }
 
         return false;
@@ -65,14 +66,10 @@ class Mongo implements CacheStorageInterface
      */
     public function save($key, $content, $ttl)
     {
-        $result = $this->mongoInstance->update(self::collection, ['key' => $key],
-            ['$set' => ['key' => $key, 'ttl' => (time() + $ttl), 'content' => $content]], ['upsert' => true]);
+        $this->mongoInstance->update(self::collection, ['key' => $key],
+            ['$set' => ['key' => $key, 'ttl' => new UTCDatetime((time() + $ttl) * 1000), 'content' => $content]], ['upsert' => true]);
 
-        if (is_object($result) && isset($key)) {
-            return true;
-        }
-
-        return false;
+        return true;
     }
 
     /**
@@ -107,6 +104,7 @@ class Mongo implements CacheStorageInterface
 
         $this->mongoInstance->createCollection(self::collection);
         $this->mongoInstance->createIndex(self::collection, new SingleIndex('key', 'key', false, true));
+        $this->mongoInstance->createIndex(self::collection, new SingleIndex('ttl', 'ttl', false, false, false, 0));
 
         return true;
 

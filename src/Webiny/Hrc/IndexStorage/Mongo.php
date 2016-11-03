@@ -6,6 +6,7 @@
  */
 namespace Webiny\Hrc\IndexStorage;
 
+use MongoDB\BSON\UTCDatetime;
 use MongoDB\Model\CollectionInfo;
 use Webiny\Component\Mongo\Index\SingleIndex;
 
@@ -45,15 +46,10 @@ class Mongo implements IndexStorageInterface
      */
     public function save($key, array $tags, $ttl)
     {
-        $result = $this->mongoInstance->update(self::collection, ['key' => $key],
-            ['$set' => ['key' => $key, 'ttl' => time() + $ttl, 'tags' => $tags]], ['upsert' => true]);
+        $this->mongoInstance->update(self::collection, ['key' => $key],
+            ['$set' => ['key' => $key, 'ttl' => new UTCDatetime((time() + $ttl) * 1000), 'tags' => $tags]], ['upsert' => true]);
 
-
-        if (is_object($result) && isset($key)) {
-            return true;
-        }
-
-        return false;
+        return true;
     }
 
     /**
@@ -96,7 +92,7 @@ class Mongo implements IndexStorageInterface
     public function selectByTags(array $tags)
     {
         $result = $this->mongoInstance->find(self::collection, ['tags' => ['$all' => $tags]]);
-        
+
         $result = array_column($result, 'key');
         if (count($result) > 0) {
             return $result;
@@ -124,6 +120,7 @@ class Mongo implements IndexStorageInterface
         $this->mongoInstance->createCollection(self::collection);
         $this->mongoInstance->createIndex(self::collection, new SingleIndex('key', 'key', false, true));
         $this->mongoInstance->createIndex(self::collection, new SingleIndex('tags', 'tags', true, false));
+        $this->mongoInstance->createIndex(self::collection, new SingleIndex('ttl', 'ttl', false, false, false, 0));
 
         return true;
     }

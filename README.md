@@ -166,11 +166,13 @@ $this->indexStorage->installCollections();
 ```
 
 You need to run this only once. Alternative approach is to create the two collections and indexes manually:
- - `HrcCacheStorage` collection should have only one index:
+ - `HrcCacheStorage` collection should have the following indexes
     - `key` => unique index on the `key` field, sparse should be false
- - `HrcIndexStorage` collection should have two indexes:
+    - `ttl` => index on ttl field with expireAfterSeconds set to 0 seconds
+ - `HrcIndexStorage` collection should have the following indexes:
     - `key` => unique index on the `key` field, sparse should be false
     - `tags` => index on the `tags` field
+    - `ttl` => index on ttl field with expireAfterSeconds set to 0 seconds
 
 ### 4. Matching a cache rule
 
