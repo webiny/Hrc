@@ -82,27 +82,12 @@ class Hrc
      *
      * @throws HrcException
      */
-    public function __construct(
-        array $cacheRules,
-        CacheStorageInterface $cacheStorage,
-        IndexStorageInterface $indexStorage
-    ) {
+    public function __construct(array $cacheRules, CacheStorageInterface $cacheStorage, IndexStorageInterface $indexStorage)
+    {
         $this->cacheStorage = $cacheStorage;
         $this->indexStorage = $indexStorage;
 
-        // parse cache rules
-        $i = 0;
-        foreach ($cacheRules as $crName => $cr) {
-            if (isset($cr['Ttl']) && isset($cr['Tags']) && isset($cr['Match'])) {
-                $this->cacheRules[$i] = new CacheRule($crName, $cr['Ttl'], $cr['Tags'], $cr['Match'],
-                    (isset($cr['QueryParams']) ? $cr['QueryParams'] : null));
-                $this->cacheRuleMap[$crName] = $i;
-            } else {
-                throw new HrcException(sprintf('Unable to parse "%s" rule. The rule is missing a definition for one of these attributes: Ttl, Tags or Match',
-                    $crName));
-            }
-            $i++;
-        }
+        $this->setCacheRules($cacheRules);
     }
 
     /**
@@ -188,6 +173,29 @@ class Hrc
             }
 
             return false;
+        }
+    }
+
+    /**
+     * Overwrite the current cache rule list.
+     *
+     * @param array $cacheRules
+     *
+     * @throws HrcException
+     */
+    public function setCacheRules(array $cacheRules)
+    {
+        $i = 0;
+        foreach ($cacheRules as $crName => $cr) {
+            if (isset($cr['Ttl']) && isset($cr['Tags']) && isset($cr['Match'])) {
+                $this->cacheRules[$i] = new CacheRule($crName, $cr['Ttl'], $cr['Tags'], $cr['Match'],
+                    (isset($cr['QueryParams']) ? $cr['QueryParams'] : null));
+                $this->cacheRuleMap[$crName] = $i;
+            } else {
+                throw new HrcException(sprintf('Unable to parse "%s" rule. The rule is missing a definition for one of these attributes: Ttl, Tags or Match',
+                    $crName));
+            }
+            $i++;
         }
     }
 
