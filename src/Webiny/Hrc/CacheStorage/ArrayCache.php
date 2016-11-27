@@ -61,4 +61,12 @@ class ArrayCache implements CacheStorageInterface
 
         return false;
     }
+
+    /**
+     * @return int Returns the remaining ttl of the matched cache rule.
+     */
+    public function getRemainingTtl()
+    {
+        return 0;
+    }
 }

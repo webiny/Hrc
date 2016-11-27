@@ -275,6 +275,16 @@ class Hrc
     }
 
     /**
+     * If read was successful, the method will return the remaining ttl of the matched cache content.
+     *
+     * @return int
+     */
+    public function getRemainingTtl()
+    {
+        return $this->cacheStorage->getRemainingTtl();
+    }
+
+    /**
      * Save a value into cache.
      * In case if no cache rule was matched, false is returned.
      *

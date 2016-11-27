@@ -24,6 +24,11 @@ interface CacheStorageInterface
     public function read($key);
 
     /**
+     * @return int Returns the remaining ttl of the matched cache rule.
+     */
+    public function getRemainingTtl();
+
+    /**
      * Save the given content into cache.
      *
      * @param string $key     Cache key.

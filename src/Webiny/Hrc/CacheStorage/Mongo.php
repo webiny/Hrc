@@ -27,6 +27,12 @@ class Mongo implements CacheStorageInterface
     private $mongoInstance;
 
     /**
+     * @var integer Remaining ttl of the current cache entry;
+     */
+    private $remainingTtl = 0;
+
+
+    /**
      * Mongo constructor.
      *
      * @param \Webiny\Component\Mongo\Mongo $mongoInstance Webiny MongoDb connection instance.
@@ -49,9 +55,12 @@ class Mongo implements CacheStorageInterface
         $result = $this->mongoInstance->findOne(self::collection, ['key' => $key]);
 
         if (is_array($result) && isset($result['content'])) {
+            $this->remainingTtl = $result['ttl']->toDateTime()->getTimestamp() - time();
+
             return $result['content'];
         }
 
+        $this->remainingTtl = 0;
         return false;
     }
 
@@ -108,5 +117,13 @@ class Mongo implements CacheStorageInterface
 
         return true;
 
+    }
+
+    /**
+     * @return int Returns the remaining ttl of the matched cache rule.
+     */
+    public function getRemainingTtl()
+    {
+        return $this->remainingTtl;
     }
 }

@@ -18,6 +18,11 @@ class FileSystem implements CacheStorageInterface
      */
     private $cacheDir;
 
+    /**
+     * @var integer Remaining ttl of the current cache entry;
+     */
+    private $remainingTtl = 0;
+
 
     /**
      * @param string $cacheDir Absolute path to the cache root folder.
@@ -47,6 +52,7 @@ class FileSystem implements CacheStorageInterface
             $cache = file_get_contents($cacheFile);
             $cache = json_decode($cache, true);
             if ($cache['ttl'] > time()) {
+                $this->remainingTtl = $cache['ttl'] - time();
                 return $cache['content'];
             } else {
                 $this->purge($key);
@@ -112,5 +118,13 @@ class FileSystem implements CacheStorageInterface
         }
 
         return $folder . $cacheKey;
+    }
+
+    /**
+     * @return int Returns the remaining ttl of the matched cache rule.
+     */
+    public function getRemainingTtl()
+    {
+        return $this->remainingTtl;
     }
 }
