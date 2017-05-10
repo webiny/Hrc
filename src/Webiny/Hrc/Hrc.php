@@ -153,6 +153,16 @@ class Hrc
 
         return $this->request;
     }
+    
+    /**
+     * In case you are modifying the $_SERVER object via code, that can have a negative effect
+     * on how the cache key is built.
+     * In such a case you need to call this method after each change to the $_SERVER object.
+     */
+    public function flushRequest()
+    {
+        $this->request = null;
+    }
 
     /**
      * Get a specific cache rule, or all of them.
