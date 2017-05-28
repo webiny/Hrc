@@ -270,16 +270,24 @@ class Request
      */
     private function matchValue($value, $pattern)
     {
-        if (strpos($pattern, '(') !== false || strpos($pattern, '[') !== false || strpos($pattern, '\\') !== false
-        ) {
-            return preg_match('#^' . $pattern . '$#', $value);
-        } elseif (strpos($pattern, '*') !== false) {
-            $pattern = preg_quote($pattern, '#');
-            $pattern = str_replace('\*', '(.+)', $pattern);
-
-            return preg_match('#^' . $pattern . '$#', $value);
-        } else {
-            return $value == $pattern;
+        // basic check
+        if($value == $pattern){
+            return true;
         }
+
+        // simple match in case pattern is just "*"
+        if ($pattern == '*' && $value != '') {
+            return true;
+        }
+
+        // more complex match in case when wildcard is part of a larger match
+        $pattern = str_replace('*', '(.+)', $pattern);
+
+        // regex match
+        if (strpos($pattern, '(') !== false || strpos($pattern, '[') !== false || strpos($pattern, '\\') !== false) {
+            return preg_match('#^' . $pattern . '$#', $value);
+        }
+
+        return false;
     }
 }
