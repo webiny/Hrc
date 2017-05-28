@@ -7,7 +7,7 @@
 namespace Webiny\Hrc;
 
 
-class SavePayload
+class ReadPayload
 {
     /**
      * @var string Cache key.
@@ -23,6 +23,8 @@ class SavePayload
      * @var MatchedRule
      */
     private $rule;
+
+    private $purgeFlag = false;
 
     public function __construct($key, $content, MatchedRule $rule)
     {
@@ -77,5 +79,21 @@ class SavePayload
     public function setRule(MatchedRule $rule)
     {
         $this->rule = $rule;
+    }
+
+    /**
+     * @return bool Should the current cache entry be purged. Default: false
+     */
+    public function getPurgeFlag()
+    {
+        return $this->purgeFlag;
+    }
+    
+    /**
+     * @param bool $flag
+     */
+    public function setPurgeFlag($flag)
+    {
+        $this->purgeFlag = $flag;
     }
 }

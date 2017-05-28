@@ -193,7 +193,15 @@ $data = $hrc->read('block 122');
 
 ### 5. Callbacks
 
-There are two main callback events supported: `beforeSave` and `afterSave`. To register a callback for those events create a class that implements `\Webiny\Hrc\EventCallbackInterface`. You will have to implement two methods `beforeSave` and `afterSave`. Both method receive 1 parameter, which is `SavePayload` instance. This instance contains all the relevant data about the current cache entry that is about to be created, or has been created. The callback methods don't need to return anything, but since the `SavePayload` instance is an object, on `beforeSave` you can use it to manipulate your cache entry, by changing the cache content, adding or removing tags and similar. On `afterSave` callback you will get back the same object, but this is just a confirmation that the object was successfully saved.
+There are two main callback events supported: 
+- `beforeSave(SavePayload)` 
+- `afterSave(SavePayload)`
+- `beforeRead(ReadPayload)`
+- `afterRead(ReadPayload)`
+
+To register a callback for those events create a class that implements `\Webiny\Hrc\EventCallbackInterface`. You will have to implement all the callback methods. Both save methods receive 1 parameter, which is `SavePayload` instance. This instance contains all the relevant data about the current cache entry that is about to be created, or has been created. Similar is for the read methods, they receive the `ReadPayload` instance, which gives you access to the current cache entry as well as the option to set the purge flag, so that the content is actually purged and not retrieved from the database. 
+
+The callback methods don't need to return anything, but since the `SavePayload` instance is an object, on `beforeSave` you can use it to manipulate your cache entry, by changing the cache content, adding or removing tags and similar. On `afterSave` callback you will get back the same object, but this is just a confirmation that the object was successfully saved.
 
  ```php
  // your Hrc instance

@@ -98,7 +98,7 @@ class Hrc
 
     /**
      * Register a callback for certain events.
-     * Currently only two events are supported: beforeSave and afterSave
+     * Currently supported events: beforeSave, afterSave, beforeRead, afterRead
      *
      * @param EventCallbackInterface $callback Your callback.
      * @throws HrcException
@@ -280,8 +280,17 @@ class Hrc
 
         // reads the cache
         $key = $this->createJointKey($name, $rule->getCacheKey());
-        $log->addMessage('CacheRule-CacheKey', $key);
-        if (!($cache = $this->cacheStorage->read($key))) {
+
+        // create read payload
+        $readPayload = new ReadPayload($key, null, $rule);
+
+        // callback: beforeRead
+        foreach ($this->callbacks as $cb) {
+            call_user_func_array([$cb, 'beforeRead'], [$readPayload]);
+        }
+
+        $log->addMessage('CacheRule-CacheKey', $readPayload->getKey());
+        if (!($cache = $this->cacheStorage->read($readPayload->getKey()))) {
             $log->addMessage('CacheStorage-Read', 'MISS');
 
             return false;
@@ -289,17 +298,23 @@ class Hrc
         $log->addMessage('CacheStorage-Read', 'HIT');
 
         // if purge flag is true, we need to clear the cache and return false
-        if ($this->purgeFlag || $this->canPurge()) {
+        if ($this->purgeFlag || $this->canPurge() || $readPayload->getPurgeFlag()) {
             $log->addMessage('CacheRule-Purge', 'A purge was requested. Purging cache and returning false on read.');
-            $this->purgeByCacheKey($key);
+            $this->purgeByCacheKey($readPayload->getKey());
 
             return false;
         }
 
         $this->log = $log;
 
+        // callback: afterRead
+        $readPayload->setContent($cache);
+        foreach ($this->callbacks as $cb) {
+            call_user_func_array([$cb, 'afterRead'], [$readPayload]);
+        }
+
         // return cache content
-        return $cache;
+        return $readPayload->getContent();
     }
 
     /**
@@ -382,7 +397,7 @@ class Hrc
             call_user_func_array([$cb, 'afterSave'], [$savePayload]);
         }
 
-        return $key;
+        return $savePayload->getKey();
     }
 
     /**
