@@ -4,6 +4,7 @@
  *
  * @copyright Copyright Webiny LTD
  */
+
 namespace Webiny\Hrc;
 
 use Webiny\Hrc\CacheRules\CacheRule;
@@ -72,6 +73,11 @@ class Hrc
      */
     private $cacheRuleMap;
 
+    /**
+     * @var array
+     */
+    private $callbacks = [];
+
 
     /**
      * Base constructor.
@@ -88,6 +94,18 @@ class Hrc
         $this->indexStorage = $indexStorage;
 
         $this->setCacheRules($cacheRules);
+    }
+
+    /**
+     * Register a callback for certain events.
+     * Currently only two events are supported: beforeSave and afterSave
+     *
+     * @param EventCallbackInterface $callback Your callback.
+     * @throws HrcException
+     */
+    public function registerCallback(EventCallbackInterface $callback)
+    {
+        $this->callbacks[] = $callback;
     }
 
     /**
@@ -153,7 +171,7 @@ class Hrc
 
         return $this->request;
     }
-    
+
     /**
      * In case you are modifying the $_SERVER object via code, that can have a negative effect
      * on how the cache key is built.
@@ -329,15 +347,28 @@ class Hrc
         }
         $log->addMessage('CacheRule-Match', sprintf('%s rule matched the request.', $rule->getCacheRule()->getName()));
 
-        // save the cache
+        // append tags
+        $rule->getCacheRule()->appendTags($cacheTagsAppend);
+
+        // create key
         $key = $this->createJointKey($name, $rule->getCacheKey());
-        $log->addMessage('CacheRule-CacheKey', $key);
-        $saved = $this->cacheStorage->save($key, $content, $rule->getCacheRule()->getTtl());
+
+        // create save payload instance
+        $savePayload = new SavePayload($key, $content, $rule);
+
+        // callback: beforeSave
+        foreach ($this->callbacks as $cb) {
+            call_user_func_array([$cb, 'beforeSave'], [$savePayload]);
+        }
+
+        $log->addMessage('CacheRule-CacheKey', $savePayload->getKey());
+        $saved = $this->cacheStorage->save($savePayload->getKey(), $savePayload->getContent(),
+            $savePayload->getRule()->getCacheRule()->getTtl());
 
         // update the index
         if ($saved) {
-            $this->indexStorage->save($key, array_merge($cacheTagsAppend, $rule->getCacheRule()->getTags()),
-                ($rule->getCacheRule()->getTtl() + time()));
+            $this->indexStorage->save($savePayload->getKey(), $savePayload->getRule()->getCacheRule()->getTags(),
+                ($savePayload->getRule()->getCacheRule()->getTtl() + time()));
             $log->addMessage('CacheStorage-Save', 'Cache saved.');
         } else {
             throw new HrcException('There has been an error while trying to save the cache.');
@@ -346,6 +377,11 @@ class Hrc
         $this->log = $log;
 
         // when saved, return cache key
+        // callback: afterSave
+        foreach ($this->callbacks as $cb) {
+            call_user_func_array([$cb, 'afterSave'], [$savePayload]);
+        }
+
         return $key;
     }
 

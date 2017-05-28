@@ -24,7 +24,7 @@ You can still use memcache, redis or any other cache storage system you want, ju
 composer require webiny/hrc
 ```
 
-Requires PHP 5.6 or later.
+Requires PHP 7.0 or later.
 
 ## How it works
 
@@ -76,7 +76,7 @@ $cacheRules = [
 `Match` is a set of match criterias that the rule needs to satisfy in order for you to be able to store content. They 
 also define what is used to create a cache key.
 
-#### Match criterias
+#### Match criteria
 
 There are several things you can use in your match criteria:
 * Url path
@@ -121,7 +121,7 @@ $mockRules = [
 ```
 
 When you use boolean in match values, in that case, only the name of that header/query string/cookie is used 
-in building the cache key, the value is not used.
+in building the cache key, the value is not used. In comparison to a wildcard, when the actual value is used.
 
 The `Callback` section is used to invoke a custom callback which is basically just an extension to the match rules. 
  The callback method should return a value, that value will be used to build the cache key. If the callback returns boolean `false`, 
@@ -155,7 +155,7 @@ and taxonomy. The index is mainly used to achieve more possibilities around cach
 
 By default we provide a filesystem cache index  and a MongoDb cache index, to create a custom-one, just implement `Webiny\Hrc\IndexStorage\IndexStorageInterface`.
 
-### Mongo storage and index
+#### Mongo storage and index
 
 If you plan to use the `Mongo` cache storage and cache index, make sure you run the `installCollections` method prior to using the driver,
 otherwise the required indexes won't be created and the performance will be slow.
@@ -190,6 +190,21 @@ $data = $hrc->read('entryName');
 $hrc->save('block 122', 'some content', 'fooBar');
 $data = $hrc->read('block 122');
 ```
+
+### 5. Callbacks
+
+There are two main callback events supported: `beforeSave` and `afterSave`. To register a callback for those events create a class that implements `\Webiny\Hrc\EventCallbackInterface`. You will have to implement two methods `beforeSave` and `afterSave`. Both method receive 1 parameter, which is `SavePayload` instance. This instance contains all the relevant data about the current cache entry that is about to be created, or has been created. The callback methods don't need to return anything, but since the `SavePayload` instance is an object, on `beforeSave` you can use it to manipulate your cache entry, by changing the cache content, adding or removing tags and similar. On `afterSave` callback you will get back the same object, but this is just a confirmation that the object was successfully saved.
+
+ ```php
+ // your Hrc instance
+ $hrc = new Hrc($cacheRules, $cacheStorage, $indexStorage);
+ 
+ // my callback handler -> must implement \Webiny\Hrc\EventCallbackInterface
+ $handler = new MyCallbackHandler();
+ 
+ // register callbacks
+ $hrc->registerCallback($handler); 
+ ```
 
 ## Cache purge
 

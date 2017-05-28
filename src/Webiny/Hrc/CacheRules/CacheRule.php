@@ -251,6 +251,16 @@ class CacheRule
     }
 
     /**
+     * Append tags to the current cache rule.
+     *
+     * @param array $tags
+     */
+    public function appendTags(array $tags)
+    {
+        $this->tags = array_merge($tags, $this->tags);
+    }
+
+    /**
      * Get the rule name.
      *
      * @return string
