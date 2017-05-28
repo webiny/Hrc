@@ -4,6 +4,7 @@
  *
  * @copyright Copyright Webiny LTD
  */
+
 namespace Webiny\Hrc\CacheRules;
 
 use Webiny\Hrc\HrcException;
@@ -65,10 +66,10 @@ class CacheRule
     /**
      * Base constructor.
      *
-     * @param string     $name                Cache rule name.
-     * @param int        $ttl                 Time-to-live, in seconds.
-     * @param array      $tags                List of tags associated to the cache rule.
-     * @param array      $matchRules          List of match conditions.
+     * @param string $name Cache rule name.
+     * @param int    $ttl Time-to-live, in seconds.
+     * @param array  $tags List of tags associated to the cache rule.
+     * @param array  $matchRules List of match conditions.
      *
      * @throws HrcException
      */
@@ -118,8 +119,10 @@ class CacheRule
                 if (is_bool($v)) {
                     if ($v === false && $request->matchHeader($h)) {
                         return false;
-                    } else if ($v === true && !$request->matchHeader($h)) {
-                        return false;
+                    } else {
+                        if ($v === true && !$request->matchHeader($h)) {
+                            return false;
+                        }
                     }
                     $cacheKey[self::header][] = $h;
                 } else {
@@ -139,8 +142,10 @@ class CacheRule
                 if (is_bool($v)) {
                     if ($v === false && $request->matchQueryParam($q)) {
                         return false;
-                    } else if ($v === true && !$request->matchQueryParam($q)) {
-                        return false;
+                    } else {
+                        if ($v === true && !$request->matchQueryParam($q)) {
+                            return false;
+                        }
                     }
                     $cacheKey[self::query][] = $q;
                 } else {
@@ -160,8 +165,10 @@ class CacheRule
                 if (is_bool($v)) {
                     if ($v === false && $request->matchCookie($c)) {
                         return false;
-                    } else if ($v === true && !$request->matchCookie($c)) {
-                        return false;
+                    } else {
+                        if ($v === true && !$request->matchCookie($c)) {
+                            return false;
+                        }
                     }
                     $cacheKey[self::cookie][] = $c;
                 } else {
@@ -239,7 +246,7 @@ class CacheRule
      */
     public function appendTags(array $tags)
     {
-        $this->tags = array_merge($tags, $this->tags);
+        $this->tags = array_unique(array_merge($tags, $this->tags));
     }
 
     /**

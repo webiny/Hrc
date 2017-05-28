@@ -101,11 +101,14 @@ class Hrc
      * Currently supported events: beforeSave, afterSave, beforeRead, afterRead
      *
      * @param EventCallbackInterface $callback Your callback.
+     *
      * @throws HrcException
      */
     public function registerCallback(EventCallbackInterface $callback)
     {
-        $this->callbacks[] = $callback;
+        if(!array_search($callback, $this->callbacks)){
+            $this->callbacks[] = $callback;
+        }
     }
 
     /**
