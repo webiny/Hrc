@@ -216,8 +216,7 @@ class Hrc
         $i = 0;
         foreach ($cacheRules as $crName => $cr) {
             if (isset($cr['Ttl']) && isset($cr['Tags']) && isset($cr['Match'])) {
-                $this->cacheRules[$i] = new CacheRule($crName, $cr['Ttl'], $cr['Tags'], $cr['Match'],
-                    (isset($cr['QueryParams']) ? $cr['QueryParams'] : null));
+                $this->cacheRules[$i] = new CacheRule($crName, $cr['Ttl'], $cr['Tags'], $cr['Match']);
                 $this->cacheRuleMap[$crName] = $i;
             } else {
                 throw new HrcException(sprintf('Unable to parse "%s" rule. The rule is missing a definition for one of these attributes: Ttl, Tags or Match',

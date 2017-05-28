@@ -61,11 +61,6 @@ class CacheRule
      */
     private $matchRules;
 
-    /**
-     * @var array|null Which query parameters should be included in the url match, regardless of match condition.
-     */
-    private $queryParamsCacheKey;
-
 
     /**
      * Base constructor.
@@ -74,16 +69,15 @@ class CacheRule
      * @param int        $ttl                 Time-to-live, in seconds.
      * @param array      $tags                List of tags associated to the cache rule.
      * @param array      $matchRules          List of match conditions.
-     * @param array|null $queryParamsCacheKey Which query parameters should be included in the url match, regardless of match condition.
      *
      * @throws HrcException
      */
-    public function __construct($name, $ttl, array $tags, array $matchRules, array $queryParamsCacheKey = null)
+    public function __construct($name, $ttl, array $tags, array $matchRules)
     {
         $this->name = $name;
         $this->ttl = $ttl;
         $this->tags = $tags;
-        $this->queryParamsCacheKey = $queryParamsCacheKey;
+
         if (count($tags) < 1) {
             throw new HrcException('A cache rule must contain at least one tag.');
         }
@@ -211,18 +205,6 @@ class CacheRule
             } else {
                 foreach ($ckv as $v) {
                     $cKeyVal .= $ckk . '-' . $v;
-                }
-            }
-        }
-
-        // append missing query params to the key
-        if (is_null($this->queryParamsCacheKey) || is_array($this->queryParamsCacheKey)) {
-            $headers = $request->getHeaders();
-            foreach ($headers as $k => $v) {
-                if (is_null($this->queryParamsCacheKey)) {
-                    $cKeyVal .= self::header . '-' . $k . ':' . $v;
-                } elseif (is_array($this->queryParamsCacheKey) && array_search($k, $this->queryParamsCacheKey)) {
-                    $cKeyVal .= self::header . '-' . $k . ':' . $v;
                 }
             }
         }
