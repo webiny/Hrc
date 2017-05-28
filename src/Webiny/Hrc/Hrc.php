@@ -106,7 +106,7 @@ class Hrc
      */
     public function registerCallback(EventCallbackInterface $callback)
     {
-        if(!array_search($callback, $this->callbacks)){
+        if (!in_array($callback, $this->callbacks)) {
             $this->callbacks[] = $callback;
         }
     }
