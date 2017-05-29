@@ -85,11 +85,15 @@ There are several things you can use in your match criteria:
 * Cookies
 * Custom callback
 
-For the first 4 items, you can use regex (PHP `preg_match` standard) or wildcard.
-Query strings, cookies and headers, you can also test if they are just defined, you don't need to match their value.
-**Note**: based on the items in match criteria the cache key is defined. For example, if you don't want to match by url, 
-but you still want the url to be part of your cache key, set the url match to '*' (wildcard / match any). If you don't do that,
-the url will not be used in creating a unique cache key for that request.
+
+Match options:
+- `true`: the parameter needs to be present, but only the parameter name, and not its value, will be used in the cache key.
+- `false`: the parameter must not be preset for the rule to match.
+- `*`: the parameter needs to exists and needs to have some value, and it's value will be used in the cache key.
+- `?`: the parameter is optional, if it exists it's value is used in the cache key.
+- any PHP regex `preg_match` standard
+- any fixed string for exact match
+
 
 Here are some match examples:
 
@@ -110,7 +114,7 @@ $mockRules = [
             ],
             'Query'    => [
                 'Cache'   => true,
-                'foo'     => 'bar *'
+                'foo'     => ?
             ],
             'Callback' => [
                 'Webiny\Hrc\UnitTests\CacheRules\MockCallbacks::returnValue'
@@ -119,9 +123,6 @@ $mockRules = [
     ]
 ];
 ```
-
-When you use boolean in match values, in that case, only the name of that header/query string/cookie is used 
-in building the cache key, the value is not used. In comparison to a wildcard, when the actual value is used.
 
 The `Callback` section is used to invoke a custom callback which is basically just an extension to the match rules. 
  The callback method should return a value, that value will be used to build the cache key. If the callback returns boolean `false`, 
