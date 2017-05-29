@@ -4,6 +4,7 @@
  *
  * @copyright Copyright Webiny LTD
  */
+
 namespace Webiny\Hrc;
 
 /**
@@ -37,9 +38,9 @@ class Request
     /**
      * Base constructor.
      *
-     * @param string|null $url         Current url (just the path, without the protocol, domain and query params).
-     * @param array|null  $headers     List of Http Request headers.
-     * @param array|null  $cookies     List of Http Request headers.
+     * @param string|null $url Current url (just the path, without the protocol, domain and query params).
+     * @param array|null  $headers List of Http Request headers.
+     * @param array|null  $cookies List of Http Request headers.
      * @param array|null  $queryParams List of Http Request query parameters.
      */
     public function __construct($url = null, array $headers = null, array $cookies = null, array $queryParams = null)
@@ -152,7 +153,7 @@ class Request
     /**
      * Check if the given header exists, and optionally if the pattern matches the header value.
      *
-     * @param string      $name    Header name to match.
+     * @param string      $name Header name to match.
      * @param string|null $pattern Optional pattern that needs to match the header value.
      *
      * @return bool|string  False if the header doesn't exist, or the pattern doesn't match.
@@ -172,6 +173,9 @@ class Request
                     return $this->getHeaders()[$name];
                 }
             }
+        } elseif ($pattern == '?') {
+            // in case of optional pattern we just return true
+            return true;
         }
 
         return false;
@@ -180,7 +184,7 @@ class Request
     /**
      * Check if the given cookie exists, and optionally if the pattern matches the cookie value.
      *
-     * @param string      $name    Cookie name to match.
+     * @param string      $name Cookie name to match.
      * @param string|null $pattern Optional pattern that needs to match the cookie value.
      *
      * @return bool|string  False if the cookie doesn't exist, or the pattern doesn't match.
@@ -200,6 +204,9 @@ class Request
                     return $this->getCookies()[$name];
                 }
             }
+        } elseif ($pattern == '?') {
+            // in case of optional pattern we just return true
+            return true;
         }
 
         return false;
@@ -208,7 +215,7 @@ class Request
     /**
      * Check if the given query param exists, and optionally if the pattern matches the query param value.
      *
-     * @param string      $name    Query param name to match.
+     * @param string      $name Query param name to match.
      * @param string|null $pattern Optional pattern that needs to match the query param value.
      *
      * @return bool|string  False if the query param doesn't exist, or the pattern doesn't match.
@@ -228,6 +235,9 @@ class Request
                     return $this->getQueryParams()[$name];
                 }
             }
+        } elseif ($pattern == '?') {
+            // in case of optional pattern we just return true
+            return true;
         }
 
         return false;
@@ -263,7 +273,7 @@ class Request
     /**
      * Method that tries to match the given pattern to the given value.
      *
-     * @param string $value   Value where the pattern match will be performed.
+     * @param string $value Value where the pattern match will be performed.
      * @param string $pattern Pattern to match.
      *
      * @return bool True if pattern matched the value, otherwise false.
@@ -271,7 +281,12 @@ class Request
     private function matchValue($value, $pattern)
     {
         // basic check
-        if($value == $pattern){
+        if ($value == $pattern) {
+            return true;
+        }
+
+        // simple check in case of optional param
+        if ($pattern == '?') {
             return true;
         }
 

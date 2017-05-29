@@ -152,11 +152,21 @@ class CacheRule
                     if (!($value = $request->matchQueryParam($q, $v))) {
                         return false;
                     } else {
-                        $cacheKey[self::query][] = $q . ':' . $value;
+                        // a query param can be an array
+                        if (is_array($value)) {
+                            $joinedValue = '';
+                            foreach ($value as $k => $v) {
+                                $joinedValue .= $k . '=' . $v;
+                            }
+                            $cacheKey[self::query][] = $q . ':' . $joinedValue;
+                        } else {
+                            $cacheKey[self::query][] = $q . ':' . $value;
+                        }
                     }
                 }
             }
         }
+
 
         // cookies
         if (isset($this->matchRules[self::cookie])) {
