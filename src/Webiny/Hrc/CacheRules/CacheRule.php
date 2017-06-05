@@ -4,9 +4,12 @@
  *
  * @copyright Copyright Webiny LTD
  */
+
 namespace Webiny\Hrc\CacheRules;
+
 use Webiny\Hrc\HrcException;
 use Webiny\Hrc\Request;
+
 /**
  * Class CacheRule - contains the cache rule information.
  *
@@ -51,16 +54,23 @@ class CacheRule
      */
     private $matchRules;
     /**
+     * @var array Additional config attributes assigned to the rule
+     */
+    private $ruleConfig;
+
+
+    /**
      * Base constructor.
      *
      * @param string $name Cache rule name.
      * @param int    $ttl Time-to-live, in seconds.
      * @param array  $tags List of tags associated to the cache rule.
      * @param array  $matchRules List of match conditions.
+     * @param array  $ruleConfig Additional config attributes assigned to the rule.
      *
      * @throws HrcException
      */
-    public function __construct($name, $ttl, array $tags, array $matchRules)
+    public function __construct($name, $ttl, array $tags, array $matchRules, $ruleConfig = [])
     {
         $this->name = $name;
         $this->ttl = $ttl;
@@ -69,7 +79,9 @@ class CacheRule
             throw new HrcException('A cache rule must contain at least one tag.');
         }
         $this->matchRules = $matchRules;
+        $this->ruleConfig = $ruleConfig;
     }
+
     /**
      * Check if the rule matches the given Request.
      * If the rule matched, cache key is returned.
@@ -214,8 +226,10 @@ class CacheRule
                 }
             }
         }
+
         return md5($cKeyVal);
     }
+
     /**
      * Get the ttl value.
      *
@@ -225,6 +239,7 @@ class CacheRule
     {
         return $this->ttl;
     }
+
     /**
      * Get the list of associated tags.
      *
@@ -234,6 +249,7 @@ class CacheRule
     {
         return $this->tags;
     }
+
     /**
      * Append tags to the current cache rule.
      *
@@ -243,6 +259,7 @@ class CacheRule
     {
         $this->tags = array_unique(array_merge($tags, $this->tags));
     }
+
     /**
      * Get the rule name.
      *
@@ -251,5 +268,13 @@ class CacheRule
     public function getName()
     {
         return $this->name;
+    }
+
+    /**
+     * @return array
+     */
+    public function getConfig()
+    {
+        return $this->ruleConfig;
     }
 }
