@@ -139,7 +139,23 @@ class MockCallbacks
     }
 }
 ```
- 
+
+Although not recommended, instead of strictly specifying match options for `Cookie`, `Header` and `Query`, you can put a `*`, to simply take all received parameters (eg. all query parameters), and build a cache key for any variation in a request.
+
+```php
+$mockRules = [
+    'GetAllParameters' => [
+        'Ttl'   => 86400,
+        'Tags'  => ['global', 'all'],
+        'Match' => [
+            'Url'      => '/match/all',
+            'Cookie'   => '*',
+            'Header'   => '*',
+            'Query'   => '*'
+        ]
+    ]
+];
+```
  
 ### 2. Cache storage
 
