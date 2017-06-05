@@ -58,7 +58,6 @@ class CacheRule
      */
     private $ruleConfig;
 
-
     /**
      * Base constructor.
      *
@@ -94,111 +93,146 @@ class CacheRule
     public function match(Request $request)
     {
         $cacheKey = [];
+
         // if no match rules are defined, we return false
         if (count($this->matchRules) < 1) {
             return false;
         }
+
+        $matchRules = $this->matchRules;
+
         // url
-        if (isset($this->matchRules[self::url])) {
-            if (!$request->matchUrl($this->matchRules[self::url])) {
+        if (isset($matchRules[self::url])) {
+            if (!$request->matchUrl($matchRules[self::url])) {
                 return false;
             } else {
                 $cacheKey[self::url] = $request->getUrl();
             }
         }
+
         // headers
-        if (isset($this->matchRules[self::header])) {
-            if ($this->matchRules[self::header] === '*') {
-                $this->matchRules[self::header] = $request->getHeaders();
+        if (isset($matchRules[self::header])) {
+            $captureAllParams = $matchRules[self::header] === '*';
+            if ($captureAllParams) {
+                $matchRules[self::header] = $request->getHeaders();
             }
+            ksort($matchRules[self::header]);
 
-            ksort($this->matchRules[self::header]);
-
-            foreach ($this->matchRules[self::header] as $h => $v) {
-                if (is_bool($v)) {
-                    if ($v === false && $request->matchHeader($h)) {
-                        return false;
-                    } else {
-                        if ($v === true && !$request->matchHeader($h)) {
-                            return false;
-                        }
-                    }
-                    $cacheKey[self::header][] = $h;
-                } else {
-                    if (!($value = $request->matchHeader($h, $v))) {
-                        return false;
-                    } else {
-                        $cacheKey[self::header][] = $h . ':' . $value;
-                    }
+            if ($captureAllParams) {
+                foreach ($matchRules[self::header] as $h => $value) {
+                    $cacheKey[self::header][] = $h . ':' . $value;
                 }
-            }
-        }
-        // query params
-        if (isset($this->matchRules[self::query])) {
-            if ($this->matchRules[self::query] === '*') {
-                $this->matchRules[self::query] = $request->getQueryParams();
-            }
-
-            ksort($this->matchRules[self::query]);
-
-            foreach ($this->matchRules[self::query] as $q => $v) {
-                if (is_bool($v)) {
-                    if ($v === false && $request->matchQueryParam($q)) {
-                        return false;
-                    } else {
-                        if ($v === true && !$request->matchQueryParam($q)) {
+            } else {
+                foreach ($matchRules[self::header] as $h => $v) {
+                    if (is_bool($v)) {
+                        if ($v === false && $request->matchHeader($h)) {
                             return false;
-                        }
-                    }
-                    $cacheKey[self::query][] = $q;
-                } else {
-                    if (!($value = $request->matchQueryParam($q, $v))) {
-                        return false;
-                    } else {
-                        // a query param can be an array
-                        if (is_array($value)) {
-                            $joinedValue = '';
-                            foreach ($value as $k => $v) {
-                                $joinedValue .= $k . '=' . $v;
-                            }
-                            $cacheKey[self::query][] = $q . ':' . $joinedValue;
                         } else {
-                            $cacheKey[self::query][] = $q . ':' . $value;
+                            if ($v === true && !$request->matchHeader($h)) {
+                                return false;
+                            }
                         }
-                    }
-                }
-            }
-        }
-        // cookies
-        if (isset($this->matchRules[self::cookie])) {
-            if ($this->matchRules[self::cookie] === '*') {
-                $this->matchRules[self::cookie] = $request->getCookies();
-            }
-
-            ksort($this->matchRules[self::cookie]);
-
-            foreach ($this->matchRules[self::cookie] as $c => $v) {
-                if (is_bool($v)) {
-                    if ($v === false && $request->matchCookie($c)) {
-                        return false;
+                        $cacheKey[self::header][] = $h;
                     } else {
-                        if ($v === true && !$request->matchCookie($c)) {
+                        if (!($value = $request->matchHeader($h, $v))) {
                             return false;
+                        } else {
+                            $cacheKey[self::header][] = $h . ':' . $value;
                         }
-                    }
-                    $cacheKey[self::cookie][] = $c;
-                } else {
-                    if (!($value = $request->matchCookie($c, $v))) {
-                        return false;
-                    } else {
-                        $cacheKey[self::cookie][] = $c . ':' . $value;
                     }
                 }
             }
         }
+
+        // query params
+        if (isset($matchRules[self::query])) {
+            $captureAllParams = $matchRules[self::query] === '*';
+            if ($captureAllParams) {
+                $matchRules[self::query] = $request->getQueryParams();
+            }
+            ksort($matchRules[self::query]);
+
+            if ($captureAllParams) {
+                foreach ($matchRules[self::query] as $q => $value) {
+                    if (is_array($value)) {
+                        $joinedValue = '';
+                        foreach ($value as $k => $v) {
+                            $joinedValue .= $k . '=' . $v;
+                        }
+                        $cacheKey[self::query][] = $q . ':' . $joinedValue;
+                    } else {
+                        $cacheKey[self::query][] = $q . ':' . $value;
+                    }
+                }
+            } else {
+                foreach ($matchRules[self::query] as $q => $v) {
+                    if (is_bool($v)) {
+                        if ($v === false && $request->matchQueryParam($q)) {
+                            return false;
+                        } else {
+                            if ($v === true && !$request->matchQueryParam($q)) {
+                                return false;
+                            }
+                        }
+                        $cacheKey[self::query][] = $q;
+                    } else {
+                        if (!($value = $request->matchQueryParam($q, $v))) {
+                            return false;
+                        } else {
+                            // a query param can be an array
+                            if (is_array($value)) {
+                                $joinedValue = '';
+                                foreach ($value as $k => $v) {
+                                    $joinedValue .= $k . '=' . $v;
+                                }
+                                $cacheKey[self::query][] = $q . ':' . $joinedValue;
+                            } else {
+                                $cacheKey[self::query][] = $q . ':' . $value;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        // cookies
+        if (isset($matchRules[self::cookie])) {
+            $captureAllParams = $matchRules[self::cookie] === '*';
+            if ($captureAllParams) {
+                $matchRules[self::cookie] = $request->getCookies();
+            }
+            ksort($matchRules[self::cookie]);
+
+            if ($captureAllParams) {
+                foreach ($matchRules[self::cookie] as $c => $value) {
+                    $cacheKey[self::cookie][] = $c . ':' . $value;
+                }
+            } else {
+                foreach ($matchRules[self::cookie] as $c => $v) {
+                    if (is_bool($v)) {
+                        if ($v === false && $request->matchCookie($c)) {
+                            return false;
+                        } else {
+                            if ($v === true && !$request->matchCookie($c)) {
+                                return false;
+                            }
+                        }
+                        $cacheKey[self::cookie][] = $c;
+                    } else {
+                        if (!($value = $request->matchCookie($c, $v))) {
+                            return false;
+                        } else {
+                            $cacheKey[self::cookie][] = $c . ':' . $value;
+                        }
+                    }
+                }
+            }
+
+        }
+
         // custom callback
-        if (isset($this->matchRules[self::callback])) {
-            foreach ($this->matchRules[self::callback] as $cb) {
+        if (isset($matchRules[self::callback])) {
+            foreach ($matchRules[self::callback] as $cb) {
                 $callbackData = explode('::', $cb);
                 if (count($callbackData) != 2) {
                     throw new HrcException('Invalid callback format. The callback must be in format of className::methodName.');
