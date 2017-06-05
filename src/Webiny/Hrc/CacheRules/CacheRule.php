@@ -251,13 +251,23 @@ class CacheRule
     }
 
     /**
+     * Set tags.
+     *
+     * @param array $tags
+     */
+    public function setTags(array $tags)
+    {
+        $this->tags = $tags;
+    }
+
+    /**
      * Append tags to the current cache rule.
      *
      * @param array $tags
      */
     public function appendTags(array $tags)
     {
-        $this->tags = array_unique(array_merge($tags, $this->tags));
+        $this->tags = array_unique(array_merge($this->tags, $tags));
     }
 
     /**

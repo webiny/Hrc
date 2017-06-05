@@ -71,11 +71,6 @@ class Hrc
     /**
      * @var array
      */
-    private $cacheRuleMap;
-
-    /**
-     * @var array
-     */
     private $callbacks = [];
 
 
@@ -216,16 +211,13 @@ class Hrc
      */
     public function setCacheRules(array $cacheRules)
     {
-        $i = 0;
         foreach ($cacheRules as $crName => $cr) {
             if (isset($cr['Ttl']) && isset($cr['Tags']) && isset($cr['Match'])) {
-                $this->cacheRules[$i] = new CacheRule($crName, $cr['Ttl'], $cr['Tags'], $cr['Match'], $cr);
-                $this->cacheRuleMap[$crName] = $i;
+                $this->cacheRules[$crName] = new CacheRule($crName, $cr['Ttl'], $cr['Tags'], $cr['Match'], $cr);
             } else {
                 throw new HrcException(sprintf('Unable to parse "%s" rule. The rule is missing a definition for one of these attributes: Ttl, Tags or Match',
                     $crName));
             }
-            $i++;
         }
     }
 
@@ -237,7 +229,7 @@ class Hrc
      */
     public function appendRule(CacheRule $cr)
     {
-        $this->cacheRules[] = $cr;
+        $this->cacheRules[$cr->getName()] = $cr;
     }
 
     /**
@@ -317,6 +309,53 @@ class Hrc
 
         // return cache content
         return $readPayload->getContent();
+    }
+
+    /**
+     * This is a helper method when you want to read the cache entry for a given key.
+     * Note this doesn't trigger any callback functions.
+     *
+     * @param string $cacheKey Cache key. (the one you got from the save method)
+     *
+     * @return bool|string
+     */
+    public function readByCacheKey($cacheKey)
+    {
+        return $this->cacheStorage->read($cacheKey);
+    }
+
+    /**
+     * Get a list of records for the given tags.
+     *
+     * @param array|string $tags Single tag or a list of tags used to purge the cache.
+     *
+     * @return array|bool
+     */
+    public function readByTags($tags)
+    {
+        if (is_string($tags)) {
+            $tags = [$tags];
+        }
+
+        // get caches from index storage
+        $cacheKeys = $this->indexStorage->selectByTags($tags);
+        if (!is_array($cacheKeys)) {
+            return false;
+        }
+
+        // load entries for the given ids
+        $entries = [];
+        foreach ($cacheKeys as $ck) {
+            $data = $this->readByCacheKey($ck);
+            if ($data) {
+                $entries[$ck] = [
+                    'content' => $this->readByCacheKey($ck),
+                    'ttl'     => $this->getRemainingTtl()
+                ];
+            }
+        }
+
+        return $entries;
     }
 
     /**
@@ -458,6 +497,18 @@ class Hrc
     }
 
     /**
+     * Updates the record directly in cache storage.
+     *
+     * @param string $cacheKey Cache key to update.
+     * @param string $content New content.
+     * @param integer $ttl Ttl.
+     */
+    public function updateByCacheKey($cacheKey, $content, $ttl)
+    {
+        $this->cacheStorage->save($cacheKey, $content, $ttl);
+    }
+
+    /**
      * Returns the debug log.
      * This is useful when debugging things.
      * Note: the header check flag will automatically validate the Request object for the control key and the debug flag.
@@ -488,8 +539,11 @@ class Hrc
         $request = $this->getRequest();
 
         if (!empty($cacheRule)) {
-            if (isset($this->cacheRuleMap[$cacheRule])) {
-                return ($this->cacheRules[$this->cacheRuleMap[$cacheRule]]);
+            if (isset($this->cacheRules[$cacheRule])) {
+                $cr = $this->cacheRules[$cacheRule];
+                $cacheKey = $cr->match($request);
+
+                return new MatchedRule($cr, $cacheKey);
             }
         } else {
             foreach ($this->cacheRules as $cr) {
