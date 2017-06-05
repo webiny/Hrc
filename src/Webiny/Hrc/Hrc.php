@@ -385,7 +385,7 @@ class Hrc
         // update the index
         if ($saved) {
             $this->indexStorage->save($savePayload->getKey(), $savePayload->getRule()->getCacheRule()->getTags(),
-                ($savePayload->getRule()->getCacheRule()->getTtl() + time()));
+                ($savePayload->getRule()->getCacheRule()->getTtl()));
             $log->addMessage('CacheStorage-Save', 'Cache saved.');
         } else {
             throw new HrcException('There has been an error while trying to save the cache.');
