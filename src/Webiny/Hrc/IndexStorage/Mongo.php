@@ -76,7 +76,7 @@ class Mongo implements IndexStorageInterface
      */
     public function deleteEntryByTags(array $tags)
     {
-        $this->mongoInstance->delete(self::collection, ['tags' => ['$in' => $tags]]);
+        $this->mongoInstance->delete(self::collection, ['tags' => ['$all' => $tags]]);
 
         return true;
     }
