@@ -325,40 +325,6 @@ class Hrc
     }
 
     /**
-     * Get a list of records for the given tags.
-     *
-     * @param array|string $tags Single tag or a list of tags used to purge the cache.
-     *
-     * @return array|bool
-     */
-    public function readByTags($tags)
-    {
-        if (is_string($tags)) {
-            $tags = [$tags];
-        }
-
-        // get caches from index storage
-        $cacheKeys = $this->indexStorage->selectByTags($tags);
-        if (!is_array($cacheKeys)) {
-            return false;
-        }
-
-        // load entries for the given ids
-        $entries = [];
-        foreach ($cacheKeys as $ck) {
-            $data = $this->readByCacheKey($ck);
-            if ($data) {
-                $entries[$ck] = [
-                    'content' => $this->readByCacheKey($ck),
-                    'ttl'     => $this->getRemainingTtl()
-                ];
-            }
-        }
-
-        return $entries;
-    }
-
-    /**
      * If read was successful, the method will return the remaining ttl of the matched cache content.
      *
      * @return int
@@ -415,6 +381,11 @@ class Hrc
         // callback: beforeSave
         foreach ($this->callbacks as $cb) {
             call_user_func_array([$cb, 'beforeSave'], [$savePayload]);
+        }
+
+        // check if a callback set the save flag to false
+        if(!$savePayload->getSaveFlag()){
+            return false;
         }
 
         $log->addMessage('CacheRule-CacheKey', $savePayload->getKey());
@@ -496,13 +467,33 @@ class Hrc
         return true;
     }
 
-    /**
-     * Updates the record directly in cache storage.
-     *
-     * @param string $cacheKey Cache key to update.
-     * @param string $content New content.
-     * @param integer $ttl Ttl.
-     */
+    public function readByTags($tags)
+    {
+        if (is_string($tags)) {
+            $tags = [$tags];
+        }
+
+        // get caches from index storage
+        $cacheKeys = $this->indexStorage->selectByTags($tags);
+        if (!is_array($cacheKeys)) {
+            return false;
+        }
+
+        // load entries for the given ids
+        $entries = [];
+        foreach ($cacheKeys as $ck) {
+            $data = $this->readByCacheKey($ck);
+            if ($data) {
+                $entries[$ck] = [
+                    'content' => $this->readByCacheKey($ck),
+                    'ttl'     => $this->getRemainingTtl()
+                ];
+            }
+        }
+
+        return $entries;
+    }
+
     public function updateByCacheKey($cacheKey, $content, $ttl)
     {
         $this->cacheStorage->save($cacheKey, $content, $ttl);
