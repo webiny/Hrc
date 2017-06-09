@@ -24,11 +24,17 @@ class SavePayload
      */
     private $rule;
 
+    /**
+     * @var bool Should the cache be saved or not.
+     */
+    private $saveFlag;
+
     public function __construct($key, $content, MatchedRule $rule)
     {
         $this->key = $key;
         $this->content = $content;
         $this->rule = $rule;
+        $this->saveFlag = true;
     }
 
     /**
@@ -77,5 +83,21 @@ class SavePayload
     public function setRule(MatchedRule $rule)
     {
         $this->rule = $rule;
+    }
+
+    /**
+     * @param bool $flag
+     */
+    public function setSaveFlag($flag)
+    {
+        $this->saveFlag =  $flag;
+    }
+
+    /**
+     * @return bool
+     */
+    public function getSaveFlag()
+    {
+        return $this->saveFlag;
     }
 }
