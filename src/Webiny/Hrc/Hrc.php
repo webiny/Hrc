@@ -534,12 +534,12 @@ class Hrc
                 $cr = $this->cacheRules[$cacheRule];
                 $cacheKey = $cr->match($request);
 
-                return new MatchedRule($cr, $cacheKey);
+                return new MatchedRule(clone $cr, $cacheKey);
             }
         } else {
             foreach ($this->cacheRules as $cr) {
                 if (($cacheKey = $cr->match($request))) {
-                    return new MatchedRule($cr, $cacheKey);
+                    return new MatchedRule(clone $cr, $cacheKey);
                 }
             }
         }
