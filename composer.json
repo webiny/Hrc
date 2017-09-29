@@ -19,8 +19,8 @@
     ],
     "minimum-stability": "dev",
     "require": {
-        "php": ">=5.5.9",
-        "webiny/mongo": "^1.4 || dev-master"
+        "php": ">=7",
+        "webiny/mongo": "~1.6 || dev-master"
     },
     "require-dev": {
         "phpunit/phpunit": "~4",
